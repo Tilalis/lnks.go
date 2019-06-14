@@ -1,0 +1,4 @@
+{
+    "database": "values.db",
+    "secretkey": "my-secret-key"
+}

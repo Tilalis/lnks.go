@@ -8,7 +8,8 @@ import (
 
 // Config initial support
 type Config struct {
-	Database string `json:"database"`
+	Database  string `json:"database"`
+	SecretKey string `json:"secretkey"`
 }
 
 // LoadConfig function to load config

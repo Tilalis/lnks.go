@@ -110,7 +110,6 @@ func GetAlias(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// jsonAlias, _ := json.Marshal(alias)
 	jsonResponse, _ := json.Marshal(response{
 		Status: ok,
 		Data:   alias,
@@ -130,7 +129,6 @@ func GetAliases(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// jsonAliases, _ := json.Marshal(aliases)
 	jsonResponse, _ := json.Marshal(response{
 		Status:  ok,
 		Message: "",

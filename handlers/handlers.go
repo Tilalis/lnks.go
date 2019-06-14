@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -27,4 +28,10 @@ func handleServerError(w http.ResponseWriter, err error) {
 
 	w.WriteHeader(http.StatusInternalServerError)
 	w.Write(jsonResponse)
+}
+
+// SecretPage to test auth
+func SecretPage(w http.ResponseWriter, r *http.Request) {
+	username := r.Context().Value(ContextUserKey("username")).(string)
+	w.Write([]byte(fmt.Sprintf("Hello %s", username)))
 }

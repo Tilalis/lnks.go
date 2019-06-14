@@ -3,7 +3,6 @@ package models
 import (
 	"crypto/sha256"
 	"database/sql"
-	"errors"
 	"fmt"
 )
 
@@ -34,7 +33,19 @@ func NewUser(username, password string) *User {
 }
 
 // GetUser gets user from database
-func GetUser(username, password string) (*User, error) {
+func GetUser(username string) (*User, error) {
+	if connection == nil {
+		return nil, ErrNoConnection
+	}
+
+	user := &User{}
+	err = userStmts.get.QueryRow(username).Scan(&user.ID, &user.Username, &user.Hash)
+
+	return user, err
+}
+
+// AuthenticateUser gets user from database and checks password
+func AuthenticateUser(username, password string) (*User, error) {
 	if connection == nil {
 		return nil, ErrNoConnection
 	}
@@ -46,8 +57,12 @@ func GetUser(username, password string) (*User, error) {
 
 	err = userStmts.get.QueryRow(username).Scan(&user.ID, &user.Username, &user.Hash)
 
+	if err != nil {
+		return nil, err
+	}
+
 	if user.Hash != hashString {
-		return nil, errors.New("")
+		return nil, ErrWrongUserPassword
 	}
 
 	return user, err
