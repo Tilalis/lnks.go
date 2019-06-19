@@ -1,4 +1,7 @@
 {
-    "database": "values.db",
-    "secretkey": "my-secret-key"
+    "database": {
+        "driver": "sqlite3",
+        "connectionString": "values.db"
+    },
+    "secretKey": "my-secret-key"
 }

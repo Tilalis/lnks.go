@@ -14,16 +14,32 @@ import (
 // ContextUserKey context user key
 type ContextUserKey string
 
-func getToken(username, secretKey string) (string, error) {
+// Auth struct
+type Auth struct {
+	cfg *config.Config
+}
+
+// NewAuth auth constructor
+func NewAuth(cfg *config.Config) *Auth {
+	if cfg == nil {
+		panic("lnks: auth config cannot be nil")
+	}
+
+	return &Auth{
+		cfg: cfg,
+	}
+}
+
+func (auth *Auth) getToken(username string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username": username,
 	})
-	return token.SignedString([]byte(secretKey))
+	return token.SignedString([]byte(auth.cfg.SecretKey))
 }
 
-func verifyToken(tokenString, secretKey string) (*models.User, error) {
+func (auth *Auth) verifyToken(tokenString string) (*models.User, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return []byte(secretKey), nil
+		return []byte(auth.cfg.SecretKey), nil
 	})
 
 	if err != nil {
@@ -36,17 +52,11 @@ func verifyToken(tokenString, secretKey string) (*models.User, error) {
 		return nil, ErrWrongToken
 	}
 
-	user, _ := models.GetUser(username.(string))
-	return user, err
+	return models.GetUser(username.(string))
 }
 
-// Auth struct
-type Auth struct {
-	Config *config.Config
-}
-
-// Authenticate authentication handler; requires config.Inject
-func (a *Auth) Authenticate(w http.ResponseWriter, r *http.Request) {
+// Authenticate authentication handler
+func (auth *Auth) Authenticate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	var authenticationRequest struct {
@@ -87,7 +97,7 @@ func (a *Auth) Authenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := getToken(user.Username, a.Config.SecretKey)
+	token, err := auth.getToken(user.Username)
 
 	if err != nil {
 		handleServerError(w, err)
@@ -104,10 +114,10 @@ func (a *Auth) Authenticate(w http.ResponseWriter, r *http.Request) {
 }
 
 // Middleware auth middleware
-func (a *Auth) Middleware(next http.HandlerFunc) http.HandlerFunc {
+func (auth *Auth) Middleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenString := strings.Replace(r.Header.Get("Authorization"), "Bearer ", "", 1)
-		user, err := verifyToken(tokenString, a.Config.SecretKey)
+		user, err := auth.verifyToken(tokenString)
 
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)

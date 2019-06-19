@@ -22,10 +22,10 @@ func main() {
 		return
 	}
 
-	models.Prepare(cfg.Database)
+	models.Prepare(cfg.Database.Driver, cfg.Database.ConnectionString)
 	defer models.Close()
 
-	auth := handlers.Auth{Config: cfg}
+	auth := handlers.NewAuth(cfg)
 	router := mux.NewRouter()
 
 	router.HandleFunc("/", index).Methods("GET")

@@ -10,10 +10,10 @@ import (
 var connection *sql.DB
 
 // Prepare opens connection to database and prepares models
-func Prepare(dbname string) error {
+func Prepare(driverName, dataSourceName string) error {
 	var err error
 
-	connection, err = sql.Open("sqlite3", dbname)
+	connection, err = sql.Open(driverName, dataSourceName)
 
 	if err != nil {
 		return err

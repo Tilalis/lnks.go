@@ -8,8 +8,11 @@ import (
 
 // Config initial support
 type Config struct {
-	Database  string `json:"database"`
-	SecretKey string `json:"secretkey"`
+	Database struct {
+		Driver           string `json:"driver"`
+		ConnectionString string `json:"connectionString"`
+	} `json:"database"`
+	SecretKey string `json:"secretKey"`
 }
 
 // LoadConfig function to load config
