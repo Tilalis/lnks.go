@@ -79,7 +79,7 @@ func GetAliases(user *User) ([]Alias, error) {
 	defer rows.Close()
 
 	var alias Alias
-	var aliases []Alias
+	var aliases = make([]Alias, 0)
 
 	for rows.Next() {
 		rows.Scan(&alias.Name, &alias.URL, &alias.userID)

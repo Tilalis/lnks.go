@@ -12,7 +12,7 @@ import (
 )
 
 // ContextUserKey context user key
-type ContextUserKey string
+type ContextKey string
 
 // Auth struct
 type Auth struct {
@@ -113,19 +113,37 @@ func (auth *Auth) Authenticate(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResponse)
 }
 
-// Middleware auth middleware
-func (auth *Auth) Middleware(next http.HandlerFunc) http.HandlerFunc {
+func (auth *Auth) middleware(next http.HandlerFunc, weak bool) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tokenString := strings.Replace(r.Header.Get("Authorization"), "Bearer ", "", 1)
-		user, err := auth.verifyToken(tokenString)
+		var ctx context.Context
 
-		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(""))
-			return
+		authorizationHeader := r.Header.Get("Authorization")
+
+		if weak && authorizationHeader == "" {
+			ctx = context.WithValue(r.Context(), ContextKey("user"), nil)
+		} else {
+			tokenString := strings.Replace(authorizationHeader, "Bearer ", "", 1)
+			user, err := auth.verifyToken(tokenString)
+
+			if err != nil {
+				w.WriteHeader(http.StatusUnauthorized)
+				w.Write([]byte(""))
+				return
+			}
+
+			ctx = context.WithValue(r.Context(), ContextKey("user"), user)
 		}
 
-		ctx := context.WithValue(r.Context(), ContextUserKey("username"), user.Username)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// StrongMiddleware auth middleware which does not allow empty Authorization
+func (auth *Auth) StrongMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return auth.middleware(next, false)
+}
+
+// WeakMiddleware auth middleware which allows empty Authorization
+func (auth *Auth) WeakMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return auth.middleware(next, true)
 }

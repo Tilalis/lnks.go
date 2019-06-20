@@ -2,12 +2,18 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 )
 
 // Config initial support
 type Config struct {
+	Server struct {
+		Host string `json:"host"`
+		Port string `json:"port"`
+	} `json:"server"`
+	Address  string `json:"-"`
 	Database struct {
 		Driver           string `json:"driver"`
 		ConnectionString string `json:"connectionString"`
@@ -37,6 +43,8 @@ func LoadConfig(filename string) (*Config, error) {
 	if err != nil {
 		return nil, ErrMalformedConfigFile.SetFile(filename)
 	}
+
+	config.Address = fmt.Sprintf("%s:%s", config.Server.Host, config.Server.Port)
 
 	return &config, nil
 }

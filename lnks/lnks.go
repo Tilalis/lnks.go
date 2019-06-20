@@ -36,18 +36,18 @@ func main() {
 	).Methods("POST")
 
 	router.HandleFunc(
-		"/api/secretpage",
-		auth.Middleware(handlers.SecretPage),
-	).Methods("GET")
+		"/api/create",
+		auth.WeakMiddleware(handlers.CreateAlias),
+	).Methods("POST")
 
 	router.HandleFunc(
-		"/api/create",
-		handlers.CreateAlias,
+		"/api/delete",
+		auth.StrongMiddleware(handlers.DeleteAlias),
 	).Methods("POST")
 
 	router.HandleFunc(
 		"/api/all",
-		handlers.GetAliases,
+		auth.StrongMiddleware(handlers.GetAliases),
 	).Methods("GET")
 
 	router.HandleFunc(
@@ -57,5 +57,5 @@ func main() {
 
 	router.HandleFunc("/{alias}", handlers.ResolveAlias).Methods("GET")
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(cfg.Address, router))
 }

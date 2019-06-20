@@ -71,6 +71,12 @@ func CreateAlias(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Save
+
+	// Get user from auth middleware
+	if user, ok := r.Context().Value(ContextKey("user")).(*models.User); ok {
+		alias.SetUser(user)
+	}
+
 	err = alias.Save()
 
 	if err != nil {
@@ -85,6 +91,35 @@ func CreateAlias(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResponse)
 }
 
+// DeleteAlias view for deleting alias
+func DeleteAlias(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	alias := &models.Alias{}
+	decoder := json.NewDecoder(r.Body)
+
+	// Decode
+	err := decoder.Decode(alias)
+
+	if err != nil {
+		handleServerError(w, err)
+		return
+	}
+
+	err = alias.Delete()
+
+	if err != nil {
+		handleServerError(w, err)
+	}
+
+	jsonResponse, _ := json.Marshal(response{
+		Status:  ok,
+		Message: "Alias deleted.",
+	})
+
+	w.Write(jsonResponse)
+}
+
 // GetAlias view for getting single alias (for testing)
 func GetAlias(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -92,12 +127,7 @@ func GetAlias(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	name := vars["alias"]
 
-	alias, err := models.GetAlias(name)
-
-	if err != nil {
-		handleServerError(w, err)
-		return
-	}
+	alias, _ := models.GetAlias(name)
 
 	if alias == nil {
 		jsonResponse, _ := json.Marshal(response{
@@ -118,11 +148,12 @@ func GetAlias(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResponse)
 }
 
-// GetAliases view for getting all aliases
+// GetAliases view for getting all aliases for specific user
 func GetAliases(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	aliases, err := models.GetAliases(nil)
+	user := r.Context().Value(ContextKey("user")).(*models.User)
+	aliases, err := models.GetAliases(user)
 
 	if err != nil {
 		handleServerError(w, err)
