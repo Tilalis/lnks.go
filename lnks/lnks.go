@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"lnks/config"
 	"lnks/handlers"
 	"lnks/models"
@@ -15,7 +16,18 @@ func index(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	cfg, err := config.LoadConfig("config.json")
+	var configFile string
+
+	const (
+		defaultFilename = "config.json"
+		flagUsage       = "configuration file"
+	)
+
+	flag.StringVar(&configFile, "config", defaultFilename, flagUsage)
+	flag.StringVar(&configFile, "c", defaultFilename, flagUsage)
+	flag.Parse()
+
+	cfg, err := config.LoadConfig(configFile)
 
 	if err != nil {
 		log.Fatal(err)
