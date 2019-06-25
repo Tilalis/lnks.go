@@ -17,7 +17,6 @@ func index(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	var configFile string
-
 	const (
 		defaultFilename = "config.json"
 		flagUsage       = "configuration file"
@@ -49,17 +48,17 @@ func main() {
 
 	router.HandleFunc(
 		"/api/create",
-		auth.WeakMiddleware(handlers.CreateAlias),
+		auth.Middleware(handlers.CreateAlias),
 	).Methods("POST")
 
 	router.HandleFunc(
 		"/api/delete",
-		auth.StrongMiddleware(handlers.DeleteAlias),
+		auth.StrictMiddleware(handlers.DeleteAlias),
 	).Methods("POST")
 
 	router.HandleFunc(
 		"/api/all",
-		auth.StrongMiddleware(handlers.GetAliases),
+		auth.StrictMiddleware(handlers.GetAliases),
 	).Methods("GET")
 
 	router.HandleFunc(
