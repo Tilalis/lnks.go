@@ -8,13 +8,14 @@ import (
 
 // Alias for Urls
 type Alias struct {
+	ID     int    `json:"-"`
 	Name   string `json:"name"`
 	URL    string `json:"url"`
 	userID int
 }
 
 var aliasStmts struct {
-	get       *sql.Stmt
+	getByName *sql.Stmt
 	insert    *sql.Stmt
 	delete    *sql.Stmt
 	getByUser *sql.Stmt
@@ -49,7 +50,7 @@ func GetAlias(name string) (*Alias, error) {
 	}
 
 	alias := &Alias{}
-	err = aliasStmts.get.QueryRow(name).Scan(&alias.Name, &alias.URL, &alias.userID)
+	err = aliasStmts.getByName.QueryRow(name).Scan(&alias.ID, &alias.Name, &alias.URL, &alias.userID)
 
 	if err != nil {
 		return nil, err
@@ -82,7 +83,7 @@ func GetAliases(user *User) ([]Alias, error) {
 	var aliases = make([]Alias, 0)
 
 	for rows.Next() {
-		rows.Scan(&alias.Name, &alias.URL, &alias.userID)
+		rows.Scan(&alias.ID, &alias.Name, &alias.URL, &alias.userID)
 		aliases = append(aliases, Alias{
 			Name:   alias.Name,
 			URL:    alias.URL,
@@ -104,9 +105,7 @@ func (alias *Alias) SetUser(user *User) {
 
 // Validate validates name and url fields
 func (alias *Alias) Validate() error {
-	match, _ := regexp.MatchString("[a-z0-9]+", alias.Name)
-
-	if !match {
+	if match, _ := regexp.MatchString("[a-z0-9]+", alias.Name); !match {
 		return ErrWrongAlias
 	}
 
@@ -120,13 +119,29 @@ func (alias *Alias) Validate() error {
 	return nil
 }
 
-// Save saves alias if it does not exist yet
+// Save saves alias if it does not exis yet
 func (alias *Alias) Save() error {
 	if connection == nil {
 		return ErrNoConnection
 	}
 
-	_, err = aliasStmts.insert.Exec(alias.Name, alias.URL, alias.userID)
+	result, err := aliasStmts.insert.Exec(alias.Name, alias.URL, alias.userID)
+
+	if err != nil {
+		return err
+	}
+
+	id, err := result.LastInsertId()
+
+	if err == nil {
+		alias.ID = int(id)
+	} else {
+		err = aliasStmts.getByName.QueryRow(alias.Name).Scan(&alias.ID, &alias.Name, &alias.URL, &alias.userID)
+
+		if err != nil {
+			return err
+		}
+	}
 
 	return err
 }
@@ -137,14 +152,14 @@ func (alias *Alias) Delete() error {
 		return ErrNoConnection
 	}
 
-	_, err = aliasStmts.delete.Exec(alias.Name)
+	_, err = aliasStmts.delete.Exec(alias.ID)
 
 	return err
 }
 
 // PrepareAlias prepares statements for Alias
 func prepareAlias(connection *sql.DB) error {
-	aliasStmts.get, err = connection.Prepare("SELECT name, url, userid FROM `alias` WHERE name = ?")
+	aliasStmts.getByName, err = connection.Prepare("SELECT id, name, url, userid FROM `alias` WHERE name = ?")
 
 	if err != nil {
 		return err
@@ -156,20 +171,20 @@ func prepareAlias(connection *sql.DB) error {
 		return err
 	}
 
-	aliasStmts.getByUser, err = connection.Prepare("SELECT name, url, userid FROM `alias` WHERE userid = ?")
+	aliasStmts.getByUser, err = connection.Prepare("SELECT id, name, url, userid FROM `alias` WHERE userid = ?")
 
 	if err != nil {
 		return err
 	}
 
-	aliasStmts.delete, err = connection.Prepare("DELETE FROM `alias` WHERE name = ?")
+	aliasStmts.delete, err = connection.Prepare("DELETE FROM `alias` WHERE id = ?")
 
 	return err
 }
 
 // CloseAlias closes statements for Alias
 func closeAlias() {
-	aliasStmts.get.Close()
+	aliasStmts.getByName.Close()
 	aliasStmts.delete.Close()
 	aliasStmts.insert.Close()
 	aliasStmts.getByUser.Close()

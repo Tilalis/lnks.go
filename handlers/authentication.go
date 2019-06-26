@@ -11,12 +11,17 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-// ContextUserKey context user key
+// ContextKey context user key
 type ContextKey string
 
 // Auth struct
 type Auth struct {
 	cfg *config.Config
+}
+
+type authRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 // NewAuth auth constructor
@@ -59,13 +64,10 @@ func (auth *Auth) verifyToken(tokenString string) (*models.User, error) {
 func (auth *Auth) Authenticate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	var authenticationRequest struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-	}
+	var request authRequest
 
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&authenticationRequest)
+	err := decoder.Decode(&request)
 
 	if err != nil {
 		handleServerError(w, err)
@@ -73,8 +75,8 @@ func (auth *Auth) Authenticate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := models.AuthenticateUser(
-		authenticationRequest.Username,
-		authenticationRequest.Password,
+		request.Username,
+		request.Password,
 	)
 
 	if err != nil {
@@ -113,13 +115,13 @@ func (auth *Auth) Authenticate(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResponse)
 }
 
-func (auth *Auth) middleware(next http.HandlerFunc, weak bool) http.HandlerFunc {
+func (auth *Auth) middleware(next http.HandlerFunc, strict bool) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var ctx context.Context
 
 		authorizationHeader := r.Header.Get("Authorization")
 
-		if weak && authorizationHeader == "" {
+		if !strict && authorizationHeader == "" {
 			ctx = context.WithValue(r.Context(), ContextKey("user"), nil)
 		} else {
 			tokenString := strings.Replace(authorizationHeader, "Bearer ", "", 1)
@@ -138,12 +140,12 @@ func (auth *Auth) middleware(next http.HandlerFunc, weak bool) http.HandlerFunc 
 	})
 }
 
-// StrongMiddleware auth middleware which does not allow empty Authorization
-func (auth *Auth) StrongMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return auth.middleware(next, false)
+// StrictMiddleware auth middleware which does not allow empty Authorization
+func (auth *Auth) StrictMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return auth.middleware(next, true)
 }
 
-// WeakMiddleware auth middleware which allows empty Authorization
-func (auth *Auth) WeakMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return auth.middleware(next, true)
+// Middleware auth middleware which allows empty Authorization
+func (auth *Auth) Middleware(next http.HandlerFunc) http.HandlerFunc {
+	return auth.middleware(next, false)
 }

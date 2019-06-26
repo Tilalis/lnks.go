@@ -15,3 +15,6 @@ var ErrWrongAlias = errors.New("lnks: wrong alias name")
 
 // ErrWrongURL wrong url
 var ErrWrongURL = errors.New("lnks: wrong url")
+
+// ErrEmptyUserCredentials empty user credentials
+var ErrEmptyUserCredentials = errors.New("lnks: empty user credentials are not allowed")

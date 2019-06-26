@@ -14,13 +14,17 @@ type User struct {
 }
 
 var userStmts struct {
-	get    *sql.Stmt
-	insert *sql.Stmt
-	delete *sql.Stmt
+	getByUsername *sql.Stmt
+	insert        *sql.Stmt
+	delete        *sql.Stmt
 }
 
 // NewUser creates new user
-func NewUser(username, password string) *User {
+func NewUser(username, password string) (*User, error) {
+	if username == "" || password == "" {
+		return nil, ErrEmptyUserCredentials
+	}
+
 	hash := sha256.Sum256([]byte(password))
 	hashString := fmt.Sprintf("%x", hash)
 
@@ -29,7 +33,7 @@ func NewUser(username, password string) *User {
 		Hash:     hashString,
 	}
 
-	return user
+	return user, nil
 }
 
 // GetUser gets user from database
@@ -39,7 +43,7 @@ func GetUser(username string) (*User, error) {
 	}
 
 	user := &User{}
-	err = userStmts.get.QueryRow(username).Scan(&user.ID, &user.Username, &user.Hash)
+	err = userStmts.getByUsername.QueryRow(username).Scan(&user.ID, &user.Username, &user.Hash)
 
 	return user, err
 }
@@ -55,7 +59,7 @@ func AuthenticateUser(username, password string) (*User, error) {
 
 	user := &User{}
 
-	err = userStmts.get.QueryRow(username).Scan(&user.ID, &user.Username, &user.Hash)
+	err = userStmts.getByUsername.QueryRow(username).Scan(&user.ID, &user.Username, &user.Hash)
 
 	if err != nil {
 		return nil, err
@@ -74,7 +78,24 @@ func (user *User) Save() error {
 		return ErrNoConnection
 	}
 
-	_, err = userStmts.insert.Exec(user.Username, user.Hash)
+	result, err := userStmts.insert.Exec(user.Username, user.Hash)
+
+	if err != nil {
+		return err
+	}
+
+	id, err := result.LastInsertId()
+
+	if err == nil {
+		user.ID = int(id)
+	} else {
+		err = userStmts.getByUsername.QueryRow(user.Username).Scan(&user.ID, &user.Username, &user.Hash)
+
+		if err != nil {
+			return err
+		}
+	}
+
 	return err
 }
 
@@ -89,7 +110,7 @@ func (user *User) Delete() error {
 }
 
 func prepareUser(connection *sql.DB) error {
-	userStmts.get, err = connection.Prepare("SELECT id, username, hash FROM user WHERE username = ?")
+	userStmts.getByUsername, err = connection.Prepare("SELECT id, username, hash FROM user WHERE username = ?")
 
 	if err != nil {
 		return err
@@ -107,7 +128,7 @@ func prepareUser(connection *sql.DB) error {
 }
 
 func closeUser() {
-	userStmts.get.Close()
+	userStmts.getByUsername.Close()
 	userStmts.insert.Close()
 	userStmts.delete.Close()
 }

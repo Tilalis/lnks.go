@@ -17,13 +17,14 @@ func index(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	var configFile string
+
 	const (
-		defaultFilename = "config.json"
-		flagUsage       = "configuration file"
+		defaultConfigFilename = "config.json"
+		configFlagUsage       = "configuration file"
 	)
 
-	flag.StringVar(&configFile, "config", defaultFilename, flagUsage)
-	flag.StringVar(&configFile, "c", defaultFilename, flagUsage)
+	flag.StringVar(&configFile, "config", defaultConfigFilename, configFlagUsage)
+	flag.StringVar(&configFile, "c", defaultConfigFilename, configFlagUsage)
 	flag.Parse()
 
 	cfg, err := config.LoadConfig(configFile)
@@ -44,6 +45,11 @@ func main() {
 	router.HandleFunc(
 		"/api/login",
 		auth.Authenticate,
+	).Methods("POST")
+
+	router.HandleFunc(
+		"/api/register",
+		handlers.RegisterUser,
 	).Methods("POST")
 
 	router.HandleFunc(

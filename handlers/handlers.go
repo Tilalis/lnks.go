@@ -16,7 +16,7 @@ const (
 type response struct {
 	Status  status      `json:"status"`
 	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
+	Data    interface{} `json:"data,omitempty"`
 }
 
 func handleServerError(w http.ResponseWriter, err error) {

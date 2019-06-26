@@ -6,10 +6,11 @@ CREATE TABLE `user` (
 );
 
 CREATE TABLE `alias` (
-	`name`	text,
+    `id` integer,
+	`name`	text UNIQUE,
 	`url`	text,
     `userid` integer,
-	PRIMARY KEY(`name`)
+	PRIMARY KEY(`id`)
     FOREIGN KEY(`userid`) REFERENCES `user`(`id`)
 );
 

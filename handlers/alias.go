@@ -43,6 +43,10 @@ func CreateAlias(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if alias.Name == "" {
+		// TODO: alias.GenerateName()
+	}
+
 	// Validate
 	err = alias.Validate()
 
@@ -80,7 +84,9 @@ func CreateAlias(w http.ResponseWriter, r *http.Request) {
 	err = alias.Save()
 
 	if err != nil {
+		// TODO: replace with `Alias already exists` message
 		handleServerError(w, err)
+		return
 	}
 
 	jsonResponse, _ := json.Marshal(response{
