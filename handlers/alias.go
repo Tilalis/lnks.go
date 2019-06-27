@@ -84,8 +84,13 @@ func CreateAlias(w http.ResponseWriter, r *http.Request) {
 	err = alias.Save()
 
 	if err != nil {
-		// TODO: replace with `Alias already exists` message
-		handleServerError(w, err)
+		jsonResponse, _ := json.Marshal(response{
+			Status:  badRequest,
+			Message: "Alias already exists.",
+		})
+
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(jsonResponse)
 		return
 	}
 

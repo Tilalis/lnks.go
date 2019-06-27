@@ -23,8 +23,13 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	user, err := models.NewUser(request.Username, request.Password)
 
 	if err != nil {
-		// TODO: add proper error handling
-		handleServerError(w, err)
+		jsonResponse, _ := json.Marshal(response{
+			Status:  badRequest,
+			Message: "Empty credentials are not allowed",
+		})
+
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(jsonResponse)
 		return
 	}
 
