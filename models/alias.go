@@ -180,31 +180,31 @@ func (alias *Alias) Delete() error {
 
 // PrepareAlias prepares statements for Alias
 func prepareAlias(connection *sql.DB) error {
-	aliasStmts.getByName, err = connection.Prepare("SELECT id, name, url, userid FROM `alias` WHERE name = ?")
+	aliasStmts.getByName, err = connection.Prepare("SELECT id, name, url, userid FROM \"alias\" WHERE name = ?")
 
 	if err != nil {
 		return err
 	}
 
-	aliasStmts.insert, err = connection.Prepare("INSERT INTO `alias` (name, url, userid) VALUES (?, ?, ?)")
+	aliasStmts.insert, err = connection.Prepare("INSERT INTO \"alias\" (name, url, userid) VALUES (?, ?, ?)")
 
 	if err != nil {
 		return err
 	}
 
-	aliasStmts.update, err = connection.Prepare("UPDATE `alias` SET name = ?, url = ?, userid = ? WHERE id = ?")
+	aliasStmts.update, err = connection.Prepare("UPDATE \"alias\" SET name = ?, url = ?, userid = ? WHERE id = ?")
 
 	if err != nil {
 		return err
 	}
 
-	aliasStmts.getByUser, err = connection.Prepare("SELECT id, name, url, userid FROM `alias` WHERE userid = ?")
+	aliasStmts.getByUser, err = connection.Prepare("SELECT id, name, url, userid FROM \"alias\" WHERE userid = ?")
 
 	if err != nil {
 		return err
 	}
 
-	aliasStmts.delete, err = connection.Prepare("DELETE FROM `alias` WHERE id = ?")
+	aliasStmts.delete, err = connection.Prepare("DELETE FROM \"alias\" WHERE id = ?")
 
 	return err
 }

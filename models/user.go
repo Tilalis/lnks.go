@@ -110,19 +110,19 @@ func (user *User) Delete() error {
 }
 
 func prepareUser(connection *sql.DB) error {
-	userStmts.getByUsername, err = connection.Prepare("SELECT id, username, hash FROM user WHERE username = ?")
+	userStmts.getByUsername, err = connection.Prepare("SELECT id, username, hash FROM \"user\" WHERE username = ?")
 
 	if err != nil {
 		return err
 	}
 
-	userStmts.insert, err = connection.Prepare("INSERT INTO user (username, hash) VALUES (?, ?)")
+	userStmts.insert, err = connection.Prepare("INSERT INTO \"user\" (username, hash) VALUES (?, ?)")
 
 	if err != nil {
 		return err
 	}
 
-	userStmts.delete, err = connection.Prepare("DELETE FROM user WHERE username = ?")
+	userStmts.delete, err = connection.Prepare("DELETE FROM \"user\" WHERE username = ?")
 
 	return err
 }

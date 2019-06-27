@@ -1,0 +1,11 @@
+{
+    "server": {
+        "host": "127.0.0.1",
+        "port": "8080"
+    },
+    "database": {
+        "driver": "postgres",
+        "connectionString": "postgres://postgres:postgres@localhost/lnks"
+    },
+    "secretKey": "my-secret-key"
+}

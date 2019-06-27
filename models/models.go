@@ -5,6 +5,9 @@ import (
 
 	// sqlite3 support
 	_ "github.com/mattn/go-sqlite3"
+
+	// postgres support
+	_ "github.com/lib/pq"
 )
 
 var connection *sql.DB
