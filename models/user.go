@@ -8,7 +8,7 @@ import (
 
 // User struct represents user
 type User struct {
-	ID       int
+	ID       uint64
 	Username string
 	Hash     string
 }
@@ -87,7 +87,7 @@ func (user *User) Save() error {
 	id, err := result.LastInsertId()
 
 	if err == nil {
-		user.ID = int(id)
+		user.ID = uint64(id)
 	} else {
 		err = userStmts.getByUsername.QueryRow(user.Username).Scan(&user.ID, &user.Username, &user.Hash)
 

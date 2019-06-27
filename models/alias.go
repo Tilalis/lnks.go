@@ -8,10 +8,10 @@ import (
 
 // Alias for Urls
 type Alias struct {
-	ID     int    `json:"-"`
+	ID     uint64 `json:"-"`
 	Name   string `json:"name"`
 	URL    string `json:"url"`
-	userID int
+	userID uint64
 }
 
 var aliasStmts struct {
@@ -105,8 +105,10 @@ func (alias *Alias) SetUser(user *User) {
 
 // Validate validates name and url fields
 func (alias *Alias) Validate() error {
-	if match, _ := regexp.MatchString("[a-z0-9]+", alias.Name); !match {
-		return ErrWrongAlias
+	if alias.Name != "" {
+		if match, _ := regexp.MatchString("[a-z0-9]+", alias.Name); !match {
+			return ErrWrongAlias
+		}
 	}
 
 	u, err := url.Parse(alias.URL)
@@ -134,13 +136,17 @@ func (alias *Alias) Save() error {
 	id, err := result.LastInsertId()
 
 	if err == nil {
-		alias.ID = int(id)
+		alias.ID = uint64(id)
 	} else {
 		err = aliasStmts.getByName.QueryRow(alias.Name).Scan(&alias.ID, &alias.Name, &alias.URL, &alias.userID)
 
 		if err != nil {
 			return err
 		}
+	}
+
+	if alias.Name == "" {
+		alias.Name = "dsg"
 	}
 
 	return err
