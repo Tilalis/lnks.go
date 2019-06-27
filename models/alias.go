@@ -2,8 +2,10 @@ package models
 
 import (
 	"database/sql"
+	"lnks/utils"
 	"net/url"
 	"regexp"
+	"time"
 )
 
 // Alias for Urls
@@ -17,6 +19,7 @@ type Alias struct {
 var aliasStmts struct {
 	getByName *sql.Stmt
 	insert    *sql.Stmt
+	update    *sql.Stmt
 	delete    *sql.Stmt
 	getByUser *sql.Stmt
 }
@@ -127,7 +130,13 @@ func (alias *Alias) Save() error {
 		return ErrNoConnection
 	}
 
-	result, err := aliasStmts.insert.Exec(alias.Name, alias.URL, alias.userID)
+	var result sql.Result
+
+	if alias.Name != "" {
+		result, err = aliasStmts.insert.Exec(alias.Name, alias.URL, alias.userID)
+	} else {
+		result, err = aliasStmts.insert.Exec(time.Now().String(), alias.URL, alias.userID)
+	}
 
 	if err != nil {
 		return err
@@ -146,7 +155,13 @@ func (alias *Alias) Save() error {
 	}
 
 	if alias.Name == "" {
-		alias.Name = "dsg"
+		alias.Name = utils.Base36Encode(alias.ID)
+
+		_, err = aliasStmts.update.Exec(alias.Name, alias.URL, alias.userID, alias.ID)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return err
@@ -172,6 +187,12 @@ func prepareAlias(connection *sql.DB) error {
 	}
 
 	aliasStmts.insert, err = connection.Prepare("INSERT INTO `alias` (name, url, userid) VALUES (?, ?, ?)")
+
+	if err != nil {
+		return err
+	}
+
+	aliasStmts.update, err = connection.Prepare("UPDATE `alias` SET name = ?, url = ?, userid = ? WHERE id = ?")
 
 	if err != nil {
 		return err
